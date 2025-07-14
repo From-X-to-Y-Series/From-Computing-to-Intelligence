@@ -116,6 +116,44 @@
 }
 
 \usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{calc,positioning}
+
+
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+
+% Define a very light gray background color
+\definecolor{verylightgray}{rgb}{0.95,0.95,0.95}
+
+% Define the codebox environment with smaller, monospace font suitable for Python code (no syntax highlighting)
+\tcbset{
+  codebox/.style={
+    colback=verylightgray,
+    colframe=gray!30,
+    boxrule=0.5pt,
+    arc=4pt,
+    auto outer arc,
+    boxsep=5pt,
+    left=5pt,
+    right=5pt,
+    top=5pt,
+    bottom=5pt,
+    listing only,
+    listing options={
+      basicstyle=\ttfamily\footnotesize, % Use \ttfamily for monospace font
+      breaklines=true,
+      columns=fullflexible,
+      keepspaces=true,
+      showspaces=false,
+      showstringspaces=false,
+      numbers=none,
+      frame=none,
+      language=Python  % sets font conventions but no keyword colors by default here
+    },
+  }
+}
 
 
 % Custom Titlepage

@@ -47,7 +47,7 @@ One possible solution satisfying all the above constraints is
 w_0 = -1, \text{ } w_1 = 1.1, \text{ and } w_2 = 1.1. 
 \)
 
-Note that this is not a unique solution—many combinations of weights satisfy the inequalities. The key insight is that for linearly separable functions like OR, a perceptron can find suitable weights to model the function accurately. We will later explore how these weights can be learned automatically using the \textit{perceptron learning algorithm}.
+Note that this is not a unique solution—many combinations of weights satisfy the inequalities. The key insight is that for linearly separable functions like OR, a perceptron can find suitable weights to model the function accurately. We will later explore how these weights can be learned automatically using the \textit{perceptron learning algorithm} \cite{khapra2018deeplearning}.
 
 \subsection{Perceptron Learning Algorithm}
 
@@ -256,7 +256,7 @@ w_1 < w_0,\quad w_2 \geq w_0,\quad w_3 \geq w_0,\quad w_4 < w_0
 There are \textit{no contradictions}. Thus, by adjusting the output weights accordingly, this single network architecture can represent \textit{all 16 possible boolean functions}.
 
 \begin{theorem}
-    Any boolean function of \( n \) inputs can be represented exactly by a network of perceptrons containing one hidden layer with \( 2^n \) perceptrons and one output layer containing a single perceptron.
+    Any boolean function of \( n \) inputs can be represented exactly by a network of perceptrons containing one hidden layer with \( 2^n \) perceptrons and one output layer containing a single perceptron \cite{khapra2018deeplearning}.
 \end{theorem}
 
 \begin{proof}

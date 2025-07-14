@@ -93,7 +93,7 @@ Let \( \boldsymbol{\theta} = [w, b] \) be the vector of parameters, initialized 
 \boldsymbol{\theta}_{\text{new}} = \boldsymbol{\theta} + \eta \cdot \Delta \boldsymbol{\theta}
 \]
 
-\textit{What is the right \( \Delta \boldsymbol{\theta} \) to choose?}
+\textit{What is the right \( \Delta \boldsymbol{\theta} \) to choose?} \cite{khapra2018deeplearning}
 To answer this, we turn to the Taylor series expansion. Let \( \boldsymbol{u} = \Delta \boldsymbol{\theta} \). Then the Taylor expansion of the loss function \( \mathcal{L}(\boldsymbol{\theta}) \) around \( \boldsymbol{\theta} \) is 
 \[
 \mathcal{L}(\boldsymbol{\theta} + \eta \boldsymbol{u}) = \mathcal{L}(\boldsymbol{\theta}) + \eta \cdot \boldsymbol{u}^T \nabla_{\boldsymbol{\theta}} \mathcal{L}(\boldsymbol{\theta}) + \frac{\eta^2}{2!} \cdot \boldsymbol{u}^T \nabla^2 \mathcal{L}(\boldsymbol{\theta}) \boldsymbol{u} + \frac{\eta^3}{3!} \cdot \ldots

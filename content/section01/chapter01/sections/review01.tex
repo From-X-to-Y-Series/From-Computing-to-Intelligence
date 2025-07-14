@@ -1,0 +1,91 @@
+\chapter*{Review: Assignment 1}\cite{khapra2018deeplearning}
+\addcontentsline{toc}{chapter}{Review: Assignment 1}
+
+The objective of this assignment is to implement and use gradient descent (and its variants) with backpropagation for a classification task using a feedforward neural network. The task is to classify images from the Fashion-MNIST dataset (available on Kaggle) into one of 10 classes.
+
+You are expected to implement the full network from scratch using Python. You may use \texttt{numpy} and \texttt{pandas}, but not any external deep learning libraries like PyTorch or TensorFlow. Use of the \texttt{argparse} module for command-line interface is mandatory. Set the seed to 1234 using \texttt{numpy.random.seed(1234)} to ensure replicability.
+
+Your implementation must support the following command-line options.
+\begin{verbatim}
+--lr          : initial learning rate
+--momentum    : momentum term (used only in momentum-based methods)
+--num_hidden  : number of hidden layers
+--sizes       : comma-separated list of sizes for each hidden layer
+--activation  : activation function (tanh or sigmoid)
+--loss        : loss function (sq for squared error, ce for cross entropy)
+--opt         : optimization method (gd, momentum, nag, adam)
+--batch_size  : batch size (1 or a multiple of 5)
+--anneal      : halve learning rate if validation loss decreases (true/false)
+--save_dir    : directory to save the model (weights and biases)
+--expt_dir    : directory to save logs and predictions
+--train       : path to training dataset
+--test        : path to test dataset
+\end{verbatim}
+
+Your main script must be named \texttt{train.py} and should run using the following format.
+\begin{verbatim}
+python train.py --lr 0.01 --momentum 0.5 --num_hidden 3 --sizes 100,100,100 \
+--activation sigmoid --loss sq --opt adam --batch_size 20 --anneal true \
+--save_dir pa1/ --expt_dir pa1/exp1/ --train train.csv --test test.csv
+\end{verbatim}
+
+You must log your training and validation metrics every 100 steps in the files \texttt{log\_train.txt} and \texttt{log\_val.txt}, located in the \texttt{expt\_dir}. 
+
+Each line must be formatted as follows.
+\begin{verbatim}
+Epoch 0, Step 100, Loss: <value>, Error: <value>, lr: <value>
+\end{verbatim}
+The error is the percentage of incorrect predictions (rounded to two decimal places).
+
+You must also generate a file \texttt{predictions.csv} in the \texttt{expt\_dir}, containing the test set predictions with the following format.
+\begin{verbatim}
+id,label
+0,3
+1,2
+2,8
+...
+9999,4
+\end{verbatim}
+
+Your report must be written in \LaTeX\ and include the following experimental plots.
+
+\textbf{1. Varying hidden layer sizes} \\
+For one, two, three, and four hidden layers, each with sizes in \{50, 100, 200, 300\}, plot the training and validation loss vs epoch (4 curves per plot, one for each size). Use sigmoid activation, cross entropy loss, Adam optimizer, batch size 20, and tune learning rate.
+
+\textbf{2. Varying optimization algorithms} \\
+Use 3 hidden layers of size 300 each and plot the training and validation loss using GD, momentum, NAG, and Adam.
+
+\textbf{3. Activation functions comparison} \\
+Compare sigmoid and tanh activations with 2 hidden layers of size 100, using Adam, cross entropy loss, and batch size 20.
+
+\textbf{4. Loss functions comparison} \\
+Compare squared error and cross entropy loss with 2 hidden layers of size 100, using sigmoid activation, Adam, and batch size 20.
+
+\textbf{5. Batch size comparison} \\
+Test with batch sizes 1, 20, 100, and 1000, using 2 hidden layers of size 100, sigmoid activation, cross entropy loss, and Adam.
+
+Each plot must have epochs on the x-axis and loss on the y-axis, with clear legends.
+
+You must create a file \texttt{supported.txt} listing the supported options for \texttt{--anneal}, \texttt{--opt}, \texttt{--loss}, and \texttt{--activation}, e.g.,
+\begin{verbatim}
+--anneal: true,false
+--opt: gd,momentum,nag,adam
+--loss: sq,ce
+--activation: tanh,sigmoid
+\end{verbatim}
+
+All deliverables should be packaged into a single \texttt{tar.gz} archive named \texttt{RollNo\_backprop.tar.gz}, containing
+\begin{verbatim}
+- train.py
+- run.sh (best performing command)
+- any other Python scripts
+- supported.txt
+- report.pdf (written in LaTeX)
+- predictions.csv
+\end{verbatim}
+
+Your task is to achieve an error rate below 8\% on the test set. Evaluation will be based on performance, code correctness, completeness, and the ability to support the specified hyperparameters. 
+
+\qed
+
+\afterpage{\blankpage}
