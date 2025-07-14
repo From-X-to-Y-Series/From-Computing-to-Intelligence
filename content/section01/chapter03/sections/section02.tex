@@ -1,19 +1,501 @@
 \section{Regularization}
 
+In the previous section, we saw that the test error tends to follow a U-shaped curve as model complexity increases. \textbf{Regularization} is a technique used to control this behavior. It helps prevent overfitting by discouraging the model from becoming too complex. In practical terms, regularization adds a penalty to the learning algorithm that grows with the model's complexity. By doing this, regularization forces the model to stay simpler than it otherwise would. 
+
 \subsection{\(l_2\) Regularization}
 
+For $l_2$ regularization, the modified loss function is given by 
+\[
+\mathcal{L}_f(\mathbf{w}) = \mathcal{L}(\mathbf{w}) + \frac{\alpha}{2} \|\mathbf{w}\|^2
+\]
+During training with stochastic gradient descent (or any of its variants), the gradient of the regularized loss becomes 
+\[
+\nabla \mathcal{L}_f(\mathbf{w}) = \nabla \mathcal{L}(\mathbf{w}) + \alpha \mathbf{w}
+\]
+The update rule modifies slightly as 
+\[
+\mathbf{w}_{t+1} = \mathbf{w}_t - \eta \nabla \mathcal{L}(\mathbf{w}_t) - \eta \alpha \mathbf{w}_t
+\]
+This requires only a minor change in code.
+
+\vspace{1em}
+\textbf{Geometric Interpretation}
+
+Let \( \mathbf{w}^* \) be the optimal solution to the unregularized loss \( \mathcal{L}(\mathbf{w}) \), i.e.,
+\[
+\nabla \mathcal{L}(\mathbf{w}^*) = 0
+\]
+Define \( \mathbf{u} = \mathbf{w} - \mathbf{w}^* \). Using a second-order Taylor expansion,
+\[
+\mathcal{L}(\mathbf{w}^* + \mathbf{u}) = \mathcal{L}(\mathbf{w}^*) + \mathbf{u}^\top \nabla \mathcal{L}(\mathbf{w}^*) + \frac{1}{2} \mathbf{u}^\top H \mathbf{u}
+\]
+Since \( \nabla \mathcal{L}(\mathbf{w}^*) = 0 \), we get
+\[
+\mathcal{L}(\mathbf{w}) = \mathcal{L}(\mathbf{w}^*) + \frac{1}{2} (\mathbf{w} - \mathbf{w}^*)^\top H (\mathbf{w} - \mathbf{w}^*)
+\]
+\[
+\nabla \mathcal{L}(\mathbf{w}) = H(\mathbf{w} - \mathbf{w}^*)
+\]
+Now, for the regularized loss
+\[
+\nabla \mathcal{L}_f(\mathbf{w}) = H(\mathbf{w} - \mathbf{w}^*) + \alpha \mathbf{w}
+\]
+Let \( \mathbf{w}_e \) be the minimizer of \( \mathcal{L}_f(\mathbf{w}) \). Then
+\[
+\nabla \mathcal{L}_f(\mathbf{w}_e) = 0 \quad \implies \quad H(\mathbf{w}_e - \mathbf{w}^*) + \alpha \mathbf{w}_e = 0
+\]
+\[
+(H + \alpha I) \mathbf{w}_e = H \mathbf{w}^* \quad
+\implies \quad
+\mathbf{w}_e = (H + \alpha I)^{-1} H \mathbf{w}^*
+\]
+If \( \alpha \to 0 \), then \( \mathbf{w}_e \to \mathbf{w}^* \). But we are interested in the case \( \alpha \neq 0 \).
+
+The final expression
+\[
+\mathbf{w}_e = (H + \alpha I)^{-1} H \mathbf{w}^*
+\]
+tells us that the regularized weight vector \( \mathbf{w}_e \) is a \textit{shrunk} version of the unregularized solution \( \mathbf{w}^* \), but not in a uniform way.
+
+To understand this better, think of the loss surface around \( \mathbf{w}^* \) as an ellipse shaped by the curvature matrix \( H \). The directions in which the surface curves sharply (large eigenvalues of \( H \)) correspond to more confident directions in the model — the model is very sure about these. In contrast, directions where the surface is flatter (small eigenvalues) are uncertain — the model is not very sensitive to changes in weights along these directions.
+
+$l_2$ regularization adds a penalty term that pulls all weights toward zero. But because it affects all directions equally (via \( \alpha I \)), its effect is stronger on uncertain directions (small \( \lambda_i \)) and weaker on confident ones (large \( \lambda_i \)).
+
+This selective shrinkage acts like a filter: it keeps the meaningful patterns in the data and removes the noisy or weak ones. The result is a simpler model that generalizes better, because it has learned to \textit{trust} only the most reliable directions in the parameter space. This is illustrated in the following subsection. 
+
+\vspace{1em}
+\textbf{Analyzing the Effect of Regularization}
+
+Assume \( H \) is symmetric positive semi-definite. Then 
+\[
+H = Q \Lambda Q^\top
+\quad \text{where } Q \text{ is orthogonal},\ QQ^\top = I
+\]
+Then,
+\[
+\mathbf{w}_e = (Q\Lambda Q^\top + \alpha I)^{-1} Q \Lambda Q^\top \mathbf{w}^*
+\]
+Note that
+\[
+Q \Lambda Q^\top + \alpha I = Q (\Lambda + \alpha I) Q^\top
+\Rightarrow (Q (\Lambda + \alpha I) Q^\top)^{-1} = Q (\Lambda + \alpha I)^{-1} Q^\top
+\]
+Hence,
+\[
+\mathbf{w}_e = Q (\Lambda + \alpha I)^{-1} \Lambda Q^\top \mathbf{w}^*
+\]
+Define a diagonal matrix \( D \) as
+\[
+D = (\Lambda + \alpha I)^{-1} \Lambda
+\Rightarrow \mathbf{w}_e = Q D Q^\top \mathbf{w}^* =
+\begin{bmatrix}
+\frac{\lambda_1}{\lambda_1 + \alpha} & 0 & \cdots & 0 \\
+0 & \frac{\lambda_2}{\lambda_2 + \alpha} & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \cdots & \frac{\lambda_n}{\lambda_n + \alpha}
+\end{bmatrix}
+\]
+So each element \( i \) of \( Q^\top \mathbf{w}^* \) is scaled by
+\(
+\frac{\lambda_i}{\lambda_i + \alpha}
+\)
+and then rotated back using \( Q \). 
+
+Observe that
+\begin{itemize}
+    \item If \( \lambda_i \gg \alpha \), then \( \frac{\lambda_i}{\lambda_i + \alpha} \approx 1 \)
+    \item If \( \lambda_i \ll \alpha \), then \( \frac{\lambda_i}{\lambda_i + \alpha} \approx 0 \)
+\end{itemize}
+So only the directions corresponding to large eigenvalues are preserved. Directions with small eigenvalues are shrunk.
+
+The effective number of parameters becomes
+\[
+\sum_{i=1}^n \frac{\lambda_i}{\lambda_i + \alpha} < n
+\]
 
 \subsection{Dataset Augmentation}
 
-\subsection{Parameter Sharing and Tying}
+Dataset augmentation is a technique used to artificially increase the size and diversity of a dataset. It works by applying various transformations to existing data points, creating new variations that retain the original label. This helps prevent overfitting and improves generalization.
+
+This technique is common across different modalities. 
+\begin{itemize}
+    \item \textbf{Images}: Transformations like rotation, flipping, noise addition, and color changes simulate real-world scenarios.
+    \item \textbf{Text}: Synonym replacement, random insertion, or back translation mimic paraphrasing.
+    \item \textbf{Audio}: Time shifting, pitch scaling, and background noise simulate different recording environments.
+\end{itemize}
+
+In images, specific transformations help models become robust to particular variations in real-world data.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{9cm}|}
+\hline
+\textbf{Transformation} & \textbf{Generalization Achieved} \\
+\hline
+Rotation & Makes the model robust to incorrect horizon alignment or varied camera orientation. \\
+\hline
+Horizontal / Vertical Flip & Helps in recognizing symmetric objects or varied viewpoints. \\
+\hline
+Scaling & Improves recognition of objects at different distances or zoom levels. \\
+\hline
+Cropping & Simulates occlusion or focus on subregions, improving detection in partial views. \\
+\hline
+Translation & Allows for tolerance to object location variance in the frame. \\
+\hline
+Brightness / Contrast Change & Simulates changes in lighting conditions (e.g., time of day). \\
+\hline
+Color Jitter / Hue Shift & Makes the model less sensitive to color variation due to sensor or lighting. \\
+\hline
+Gaussian Noise Addition & Trains the model to handle poor image quality or noisy sensors. \\
+\hline
+Cutout / Random Erasing & Encourages the model to rely on global context and not just one feature. \\
+\hline
+Perspective / Affine Transform & Builds invariance to viewpoint changes and distortions. \\
+\hline
+\end{tabular}
+\caption{Image Augmentation Techniques and Their Generalization Effects}
+\end{table}
+
+These augmentations help the model learn invariant features and reduce sensitivity to noise or distortions present during inference.
 
 \subsection{Adding Noise to the Inputs}
 
-\subsection{Adding Noise to the Outputs}
+Adding Gaussian noise to the input of a neural network acts like $l_2$ regularisation (also called weight decay). This is similar to data augmentation.
+
+Let the noise be
+\[
+\varepsilon_i \sim \mathcal{N}(0, \sigma^2) \quad \text{ and } \quad x_i^{e} = x_i + \varepsilon_i
+\]
+We define
+\[
+y_b = \sum_{i=1}^{n} w_i x_i
+\quad \text{and} \quad
+y_e = \sum_{i=1}^{n} w_i x_i^{e}
+= \sum_{i=1}^{n} w_i x_i + \sum_{i=1}^{n} w_i \varepsilon_i = y_b + \sum_{i=1}^{n} w_i \varepsilon_i
+\]
+We are interested in the expected squared error
+\[
+\mathbb{E}\left[(y_e - y)^2\right]
+\]
+\[
+= \mathbb{E}\left[(y_b + \sum_{i=1}^{n} w_i \varepsilon_i - y)^2\right]
+\]
+\[
+= \mathbb{E}\left[\left((y_b - y) + \sum_{i=1}^{n} w_i \varepsilon_i\right)^2\right]
+\]
+\[
+= \mathbb{E}\left[(y_b - y)^2\right]
++ 2 \, \mathbb{E}\left[(y_b - y) \sum_{i=1}^{n} w_i \varepsilon_i\right]
++ \mathbb{E}\left[\left(\sum_{i=1}^{n} w_i \varepsilon_i\right)^2\right]
+\]
+The second term vanishes because the noise \( \varepsilon_i \) is independent of \( y_b - y \) and has mean zero.
+\[
+= \mathbb{E}\left[(y_b - y)^2\right]
++ \sum_{i=1}^{n} w_i^2 \mathbb{E}[\varepsilon_i^2]
+= \mathbb{E}\left[(y_b - y)^2\right] + \sigma^2 \sum_{i=1}^{n} w_i^2
+\]
+The second term is the $l_2$ norm penalty. So, adding Gaussian noise to the inputs has the same effect as adding an $l_2$ regularisation term on the weights.
+
 
 \subsection{Early Stopping}
 
+Early stopping is a simple and effective regularization technique that prevents overfitting. It works by monitoring the validation error during training and halting the process when the model stops improving. The idea is to avoid training the model so much that it starts to memorize the training data instead of generalizing.
+
+We track the validation error at each step and use a \emph{patience parameter} \( p \). If we're at iteration \( k \), and there hasn't been any improvement in the validation error in the last \( p \) steps, then we stop training and return the model stored at iteration \( k - p \). This model likely has better generalization ability than the one at the final iteration.
+
+Basically, we stop the training \textbf{early}—before the training loss \( \mathcal{L}_{\text{train}} \) goes to zero—because further minimization may cause the validation loss \( \mathcal{L}_{\text{val}} \) to increase due to overfitting.
+
+Let us now analyze this behavior mathematically using the stochastic gradient descent (SGD) update rule. Recall 
+\[
+\mathbf{w}_{t+1} = \mathbf{w}_t - \eta \nabla \mathcal{L}(\mathbf{w}_t)
+\]
+This can be expanded over \( t \) iterations starting from \( \mathbf{w}_0 \) as
+\[
+\mathbf{w}_{t+1} = \mathbf{w}_0 - \eta \sum_{i=1}^{t} \nabla \mathcal{L}(\mathbf{w}_i)
+\]
+Assuming each gradient step is bounded in magnitude by a constant \( \tau \), i.e., \( \| \nabla \mathcal{L}(\mathbf{w}_i) \| \leq \tau \), we get
+\[
+\|\mathbf{w}_{t+1} - \mathbf{w}_0\| \leq \eta t \tau
+\]
+This inequality tells us something intuitive: the number of steps \( t \) determines how far the weight vector \( \mathbf{w}_t \) can move from its initial point \( \mathbf{w}_0 \). In other words, early stopping implicitly controls the "space of exploration" for the weights, acting as a form of regularization.
+
+To go deeper, we consider a Taylor expansion of the loss function \( \mathcal{L}(\mathbf{w}) \) around the optimum \( \mathbf{w}^* \). Since \( \nabla \mathcal{L}(\mathbf{w}^*) = 0 \), we get
+\[
+\mathcal{L}(\mathbf{w}) \approx \mathcal{L}(\mathbf{w}^*) + \frac{1}{2} (\mathbf{w} - \mathbf{w}^*)^\top H (\mathbf{w} - \mathbf{w}^*)
+\]
+Here, \( H \) is the Hessian matrix of second derivatives evaluated at \( \mathbf{w}^* \), and tells us about the curvature of the loss landscape. The gradient at any point is then
+\[
+\nabla \mathcal{L}(\mathbf{w}) = H (\mathbf{w} - \mathbf{w}^*)
+\]
+Substituting this into the SGD update,
+\[
+\mathbf{w}_t = \mathbf{w}_{t-1} - \eta H (\mathbf{w}_{t-1} - \mathbf{w}^*)
+\]
+\[
+\mathbf{w}_t = (I - \eta H) \mathbf{w}_{t-1} + \eta H \mathbf{w}^*
+\]
+This recursive update implies that the weight vector is being pulled towards \( \mathbf{w}^* \), but moderated by the matrix \( I - \eta H \), which depends on both the learning rate \( \eta \) and the curvature encoded in \( H \).
+
+To make further progress, we perform an eigendecomposition of the Hessian,
+\[
+H = Q \Lambda Q^\top
+\]
+where \( Q \) is an orthonormal matrix of eigenvectors and \( \Lambda \) is a diagonal matrix of eigenvalues. Then the update becomes
+\[
+\mathbf{w}_t = (I - \eta Q \Lambda Q^\top) \mathbf{w}_{t-1} + \eta Q \Lambda Q^\top \mathbf{w}^*
+\]
+If we assume \( \mathbf{w}_0 = 0 \), then through recursion (\textit{mathematical induction}), one can derive 
+\[
+\mathbf{w}_t = Q \left[ I - (I - \eta \Lambda)^t \right] Q^\top \mathbf{w}^*
+\]
+This expression tells us how the weights evolve over time. The term \( (I - \eta \Lambda)^t \) decays with time, so the weights gradually approach the optimal \( \mathbf{w}^* \), but in a directionally dependent manner—each eigencomponent decays according to its eigenvalue.
+
+\noindent Now compare this with the closed-form solution for $l_2$-regularized loss minimization.
+\[
+\tilde{\mathbf{w}} = Q \left[ I - (\Lambda + \alpha I)^{-1} \alpha \right] Q^\top \mathbf{w}^*
+\]
+This expression emerges from minimizing \( \mathcal{L}(\mathbf{w}) + \frac{\alpha}{2} \|\mathbf{w}\|^2 \), where \( \alpha \) is the regularization coefficient. The regularization suppresses directions corresponding to large eigenvalues (which often correlate with noisy directions in the data).
+
+ We observe that
+\[
+\mathbf{w}_t = \tilde{\mathbf{w}} \quad \text{if} \quad (I - \eta \Lambda)^t = (\Lambda + \alpha I)^{-1} \alpha
+\]
+This equivalence shows a deep insight: \textit{\textbf{early stopping can mimic the effect of $l_2$ regularization}}, but without explicitly modifying the loss function. Instead, it controls the number of iterations (i.e., exploration depth) to suppress weight magnitudes in directions associated with high curvature.
+
+
 \subsection{Ensemble Methods}
 
+Ensemble methods combine the predictions of multiple models to reduce the overall generalization error. The key idea is that multiple weak models, when aggregated smartly, can perform better than a single strong model.
+
+There are many ways to construct such ensembles.
+\begin{itemize}
+    \item Use different classifiers altogether.
+    \item Use the same classifier trained with,
+    \begin{itemize}
+        \item different hyperparameters,
+        \item different features,
+        \item or different samples from the training data.
+    \end{itemize}
+\end{itemize}
+
+\textbf{Bagging (Bootstrap Aggregating)} is one such method where we use multiple versions of the same classifier. Each instance is trained on a different dataset created by sampling with replacement from the original dataset. These are known as bootstrap samples, denoted as \( T_1, T_2, \ldots, T_k \). Each training set \( T_i \) is used to train a model that makes a prediction.
+
+Let each of these \( k \) models make an error \( \varepsilon_i \) on a test example. Then the average prediction error from the ensemble is
+\(
+\frac{1}{k} \sum_{i=1}^k \varepsilon_i
+\). 
+We are interested in the expected mean squared error (MSE) of the ensemble.
+\[
+\text{MSE} = \mathbb{E}\left[\left( \frac{1}{k} \sum_{i=1}^k \varepsilon_i \right)^2\right] = \frac{1}{k^2} \mathbb{E} \left[ \sum_{i=1}^k \varepsilon_i^2 + \sum_{i \ne j} \varepsilon_i \varepsilon_j \right]. 
+\]
+Let
+\(
+\mathbb{E}[\varepsilon_i^2] = V  \text{ (variance of individual model error) } \text{ and } \mathbb{E}[\varepsilon_i \varepsilon_j] = C  \text{ (covariance between errors) }
+\).     
+Substituting,
+\[
+\text{MSE} = \frac{1}{k^2} \left( kV + k(k-1)C \right)
+= \frac{1}{k} V + \frac{k-1}{k} C
+\]
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Scenario} & \textbf{Resulting MSE} \\
+\hline
+Perfectly correlated errors (\(V = C\)) & \( \text{MSE} = V \) \\
+Uncorrelated errors (\(C = 0\)) & \( \text{MSE} = \frac{1}{k} V \) \\
+\hline
+\end{tabular}
+\captionof{table}{Effect of correlation on ensemble MSE}
+\end{center}
+
+\textit{Why does it work?} The intuition is simple: averaging cancels out noise. If the errors made by the models are \textit{uncorrelated}, their individual mistakes won't align, and averaging reduces the variance. But if all models make the same mistake (i.e., errors are \textit{correlated}), then averaging doesn't help. Let’s interpret the final result. 
+\[
+\text{MSE} = \frac{1}{k} V + \frac{k-1}{k} C
+\]
+\begin{itemize}
+    \item The first term \( \frac{1}{k} V \) shows how averaging over multiple models reduces variance.
+    \item The second term \( \frac{k-1}{k} C \) shows the penalty due to correlation. Higher correlation means this term dominates.
+\end{itemize}
+As \( k \to \infty \), the variance term shrinks to zero, but the covariance term converges to \( C \). So, if the models are independent, the ensemble becomes almost perfect. If not, there's a limit to the benefit.
 
 \subsection{Dropout}
+
+Training an ensemble of neural networks generally improves performance. But it's computationally expensive to train and store multiple large models. There are a few ways to build ensembles. 
+\begin{itemize}
+    \item Train different architectures. This is expensive and hard to scale.
+    \item Train the same network on different subsets of the data. Still expensive.
+\end{itemize}
+Even if we somehow manage to train these models, combining them at test time is slow. That’s not practical for real-time systems.
+
+
+\textbf{Dropout} offers a workaround. It trains multiple networks without the extra cost. During training, we randomly drop some units. When a unit is dropped, all its incoming and outgoing connections are also removed. This gives a \textit{thinned} network, which is a subnetwork of the original. Each hidden unit is retained with a fixed probability $p$ (usually 0.5), and each visible unit with $p = 0.8$. At each iteration, we sample a different subnetwork.
+
+So instead of training one big model, we’re effectively training many smaller models that share parameters. At test time, we use the full network but scale the weights to account for dropout.
+
+The loss function is computed using the thinned network at each step,
+\(
+\mathcal{L} = \mathcal{L}\left( f(\mathbf{x}; \boldsymbol{\theta}_{\text{drop}}), \mathbf{y} \right)
+\)
+where $\boldsymbol{\theta}_{\text{drop}}$ are the parameters of the thinned network in that iteration.
+
+Dropout adds masking noise to the hidden units. It prevents them from relying too much on each other since any unit can be dropped during training. As a result, each hidden unit learns to be more robust to random dropout.
+
+\begin{figure}[h!]
+    \centering
+    \def\layersep{1.5cm}
+    \def\plotsep{8cm}
+
+    \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+        \tikzstyle{neuron}=[circle, minimum size=20pt, inner sep=0pt, draw=black]
+        \tikzstyle{input neuron}=[neuron, fill=green!30, opacity=0.6]
+        \tikzstyle{hidden neuron}=[neuron, fill=blue!20, opacity=0.6]
+        \tikzstyle{output neuron}=[neuron, fill=red!30, opacity=0.6]
+        \tikzstyle{dropped neuron}=[neuron, fill=gray!40, opacity=0.3, draw=gray]
+        \tikzstyle{bias neuron}=[neuron, fill=orange!70, opacity=0.6]
+        \tikzstyle{annot} = [text width=4em, text centered]
+        \tikzstyle{labelnode} = [font=\small]
+        \tikzstyle{dropped edge} = [draw=gray!30, opacity=0.3]
+
+        % LEFT SUBPLOT - FULLY CONNECTED
+        % Input layer
+        \node[input neuron] (I-1) at (0,-1) {};
+        \node[input neuron] (I-2) at (0,-2.5) {};
+        \node[input neuron] (I-3) at (0,-4) {};
+        \node[bias neuron] (I-bias) at (0,-5.5) {};
+        
+        \node[labelnode] at ($(I-1)+(-0.7,0)$) {$x_1$};
+        \node[labelnode] at ($(I-2)+(-0.7,0)$) {$x_2$};
+        \node[labelnode] at ($(I-3)+(-0.7,0)$) {$x_3$};
+        \node[labelnode] at ($(I-bias)+(-0.7,0)$) {$b_0$};
+
+        % Hidden layer 1
+        \node[hidden neuron] (H1-1) at (\layersep,-1) {};
+        \node[hidden neuron] (H1-2) at (\layersep,-2.5) {};
+        \node[hidden neuron] (H1-3) at (\layersep,-4) {};
+        \node[bias neuron] (H1-bias) at (\layersep,-5.5) {};
+        \node[labelnode] at ($(H1-bias)+(0,-0.7)$) {$b_1$};
+
+        % Hidden layer 2
+        \node[hidden neuron] (H2-1) at (2*\layersep,-1) {};
+        \node[hidden neuron] (H2-2) at (2*\layersep,-2.5) {};
+        \node[hidden neuron] (H2-3) at (2*\layersep,-4) {};
+        \node[bias neuron] (H2-bias) at (2*\layersep,-5.5) {};
+        \node[labelnode] at ($(H2-bias)+(0,-0.7)$) {$b_2$};
+
+        % Output layer
+        \node[output neuron] (O1) at (3*\layersep,-2) {};
+        \node[output neuron] (O2) at (3*\layersep,-3.5) {};
+        
+        \node[labelnode] at ($(O1)+(0.7,0)$) {$y_1$};
+        \node[labelnode] at ($(O2)+(0.7,0)$) {$y_2$};
+
+        % Connections - fully connected
+        \foreach \i in {1,2,3}
+            \foreach \j in {1,2,3}
+                \draw (I-\i) -- (H1-\j);
+        \foreach \j in {1,2,3}
+            \draw (I-bias) -- (H1-\j);
+
+        \foreach \i in {1,2,3}
+            \foreach \j in {1,2,3}
+                \draw (H1-\i) -- (H2-\j);
+        \foreach \j in {1,2,3}
+            \draw (H1-bias) -- (H2-\j);
+
+        \foreach \i in {1,2,3}
+            \foreach \j in {1,2}
+                \draw (H2-\i) -- (O\j);
+        \foreach \j in {1,2}
+            \draw (H2-bias) -- (O\j);
+
+        % RIGHT SUBPLOT - WITH DROPOUT
+        % Input layer
+        \node[input neuron] (I2-1) at (\plotsep,-1) {};
+        \node[input neuron] (I2-2) at (\plotsep,-2.5) {};
+        \node[input neuron] (I2-3) at (\plotsep,-4) {};
+        \node[bias neuron] (I2-bias) at (\plotsep,-5.5) {};
+        
+        \node[labelnode] at ($(I2-1)+(-0.7,0)$) {$x_1$};
+        \node[labelnode] at ($(I2-2)+(-0.7,0)$) {$x_2$};
+        \node[labelnode] at ($(I2-3)+(-0.7,0)$) {$x_3$};
+        \node[labelnode] at ($(I2-bias)+(-0.7,0)$) {$b_0$};
+
+        % Hidden layer 1 (with dropout)
+        \node[hidden neuron] (H12-1) at (\plotsep+\layersep,-1) {};
+        \node[dropped neuron] (H12-2) at (\plotsep+\layersep,-2.5) {}; % Dropped
+        \node[hidden neuron] (H12-3) at (\plotsep+\layersep,-4) {};
+        \node[bias neuron] (H12-bias) at (\plotsep+\layersep,-5.5) {};
+        \node[labelnode] at ($(H12-bias)+(0,-0.7)$) {$b_1$};
+
+        % Hidden layer 2 (with dropout)
+        \node[dropped neuron] (H22-1) at (\plotsep+2*\layersep,-1) {}; % Dropped
+        \node[hidden neuron] (H22-2) at (\plotsep+2*\layersep,-2.5) {};
+        \node[hidden neuron] (H22-3) at (\plotsep+2*\layersep,-4) {};
+        \node[bias neuron] (H22-bias) at (\plotsep+2*\layersep,-5.5) {};
+        \node[labelnode] at ($(H22-bias)+(0,-0.7)$) {$b_2$};
+
+        % Output layer
+        \node[output neuron] (O12) at (\plotsep+3*\layersep,-2) {};
+        \node[output neuron] (O22) at (\plotsep+3*\layersep,-3.5) {};
+        
+        \node[labelnode] at ($(O12)+(0.7,0)$) {$y_1$};
+        \node[labelnode] at ($(O22)+(0.7,0)$) {$y_2$};
+
+        % Connections - with dropout (reduced connections)
+        % Input to hidden 1 (skip dropped neuron H12-2)
+        \foreach \i in {1,2,3}
+            \draw (I2-\i) -- (H12-1);
+        \foreach \i in {1,2,3}
+            \draw[dropped edge] (I2-\i) -- (H12-2); % Dropped connections
+        \foreach \i in {1,2,3}
+            \draw (I2-\i) -- (H12-3);
+        
+        \draw (I2-bias) -- (H12-1);
+        \draw[dropped edge] (I2-bias) -- (H12-2); % Dropped
+        \draw (I2-bias) -- (H12-3);
+
+        % Hidden 1 to hidden 2 (skip dropped neurons)
+        \draw[dropped edge] (H12-1) -- (H22-1); % Dropped
+        \draw (H12-1) -- (H22-2);
+        \draw (H12-1) -- (H22-3);
+        
+        \draw[dropped edge] (H12-2) -- (H22-1); % Dropped
+        \draw[dropped edge] (H12-2) -- (H22-2); % Dropped
+        \draw[dropped edge] (H12-2) -- (H22-3); % Dropped
+        
+        \draw[dropped edge] (H12-3) -- (H22-1); % Dropped
+        \draw (H12-3) -- (H22-2);
+        \draw (H12-3) -- (H22-3);
+        
+        \draw[dropped edge] (H12-bias) -- (H22-1); % Dropped
+        \draw (H12-bias) -- (H22-2);
+        \draw (H12-bias) -- (H22-3);
+
+        % Hidden 2 to output (skip dropped neuron H22-1)
+        \draw[dropped edge] (H22-1) -- (O12); % Dropped
+        \draw[dropped edge] (H22-1) -- (O22); % Dropped
+        
+        \draw (H22-2) -- (O12);
+        \draw (H22-2) -- (O22);
+        \draw (H22-3) -- (O12);
+        \draw (H22-3) -- (O22);
+        
+        \draw[dropped edge] (H22-bias) -- (O12); % Reduced connection
+        \draw (H22-bias) -- (O22);
+
+    \end{tikzpicture}
+    \caption{Neural Network Architecture: Fully Connected (left) vs. With Dropout (right).}
+    \label{fig:nn_dropout_comparison}
+\end{figure}
+
+Given a total of \( n \) nodes, the number of possible thinned networks that can be formed is \( 2^n \). This number is too large to train individually. The trick is to \textit{share weights across all networks} and \textit{sample a different network for each training instance.}
+
+We start by initializing all the weights of the network. For the first training instance (or mini-batch), we apply dropout, which gives us a thinned version of the network. We compute the loss and perform backpropagation. Only the weights that are active in this thinned network get updated.
+
+For the second training instance, dropout is applied again, forming a new thinned network. We compute the loss and update the active weights once more. If a weight was active in both cases, it receives two updates. If it was active in only one, it gets a single update. Even though many thinned networks are trained rarely or never, parameter sharing ensures that no weight remains untrained.
+
+It’s not practical to aggregate the outputs of all \( 2^n \) thinned networks. So, at test time, we use the full network without dropout. To account for the effect of dropout during training, we scale the output of each node by the fraction of times it was active.
+
+

@@ -1,1 +1,36 @@
 \section{Better Weight Initialization}
+
+Weight initialization plays a key role in training deep neural networks. Poor initialization can lead to vanishing or exploding gradients, making learning slow or unstable. One effective approach that emerged before the era of deep supervised learning is \textbf{unsupervised pretraining}.
+
+\textbf{What is Unsupervised Pretraining?}
+
+Before training a deep network on a supervised task, each layer is trained individually in an unsupervised manner. The idea is to treat each layer as a building block that learns to encode the input into a compact and informative representation.
+
+A typical approach involves using \textit{autoencoders} or \textit{Restricted Boltzmann Machines (RBMs, more on them later)}. Each layer is trained to reconstruct its input. Once trained, the layer's weights are fixed, and its output becomes the input to the next layer. This process continues layer by layer.
+
+\textbf{How Does It Help?}
+
+Unsupervised pretraining provides a good initialization point for the network weights. Instead of starting from random values, the network begins training from a state that already captures meaningful structure in the input data. This has several advantages.
+\begin{itemize}
+    \item It prevents the gradients from vanishing or exploding during the early stages of training.
+    \item The optimization starts closer to a good local minimum.
+    \item It leads to faster convergence and often better generalization.
+\end{itemize}
+
+\textbf{Example: Pretraining with Autoencoders}
+
+Suppose we have input data $\boldsymbol{x} \in \mathbb{R}^n$. The first layer is trained as an autoencoder.
+\[
+\boldsymbol{h}^{(1)} = \sigma(\boldsymbol{W}^{(1)} \boldsymbol{x} + \boldsymbol{b}^{(1)}), \quad \hat{\boldsymbol{x}} = \sigma(\boldsymbol{W}^{(1)\top} \boldsymbol{h}^{(1)} + \boldsymbol{c}^{(1)})
+\]
+The goal is to minimize the reconstruction loss
+\[
+\mathcal{L}^{(1)} = \| \hat{\boldsymbol{x}} - \boldsymbol{x} \|^2
+\]
+Once the weights $\boldsymbol{W}^{(1)}$ are trained, they are used to initialize the first layer of the full network. The same process is applied to the hidden representation $\boldsymbol{h}^{(1)}$ to train the next layer, and so on.
+
+\textbf{Transition to Supervised Learning}
+
+After unsupervised pretraining of all layers, the entire network is fine-tuned using the labeled data via backpropagation. Since the initial weights already capture useful structure, the fine-tuning process becomes more efficient and effective.
+
+

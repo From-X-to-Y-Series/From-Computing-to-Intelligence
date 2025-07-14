@@ -1,3 +1,78 @@
 \section{Better Activation Functions}
 
+Activation functions introduce non-linearity into neural networks, allowing them to learn complex patterns. However, not all activation functions are equally effective. Some perform better than others due to how they affect gradients during training.
+
+The sigmoid function is given by
+\[
+\sigma(x) = \frac{1}{1 + e^{-x}}.
+\]
+Its range is $(0, 1)$, which means it is never truly zero or one, but it can get arbitrarily close. When $x$ is a large positive or negative number, the function value saturates near 1 or 0, respectively.
+At saturation, the derivative of the sigmoid function becomes very small.
+\[
+\sigma'(x) = \sigma(x) (1 - \sigma(x))
+\]
+When $\sigma(x) \approx 1$ or $\sigma(x) \approx 0$, the derivative $\sigma'(x) \approx 0$. This leads to the well-known \textbf{vanishing gradient problem}, where gradients become too small to make meaningful updates to the weights during backpropagation.
+
+\textit{Why do neurons saturate?} One common cause is initializing weights to large values. In that case, the linear combination $\boldsymbol{w}^\top \boldsymbol{x} + b$ becomes large, pushing $\sigma(\boldsymbol{w}^\top \boldsymbol{x} + b)$ into its saturated zone. Once this happens, the gradient becomes negligible, and learning stalls.
+
+In addition, sigmoid is not zero-centered. This means the outputs of neurons are always positive, causing gradients to have consistent signs during updates, which can slow down convergence.
+
+Finally, computing the exponential function $e^{-x}$ is relatively expensive, making sigmoid slower than simpler alternatives.
+
+\textbf{Hyperbolic Tangent: $\tanh(x)$}
+
+Another commonly used activation function is the hyperbolic tangent.
+\[
+\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}
+\]
+Its range is $(-1, 1)$, which makes it zero-centered. This is a clear improvement over sigmoid, as it leads to faster convergence.
+The derivative is
+\[
+\frac{d}{dx}\tanh(x) = 1 - \tanh^2(x). 
+\]
+Again, we face the same issue: the derivative vanishes when the input is far from zero. Thus, $\tanh$ still suffers from saturation and is computationally expensive due to exponentials.
+
+\textbf{Rectified Linear Unit (ReLU)}
+
+The ReLU function is defined as
+\[
+f(x) = \max(0, x).
+\]
+It introduces non-linearity in a very simple and effective way. Unlike sigmoid and $\tanh$, ReLU does not saturate for positive inputs. That is, its gradient is constant in the positive region.
+\[
+\frac{d}{dx}\text{ReLU}(x) = 
+\begin{cases}
+0 & \text{if } x < 0 \\
+1 & \text{if } x > 0
+\end{cases}
+\]
+This avoids vanishing gradients in the positive region, which is a major advantage. ReLU is also computationally efficient, as it avoids exponentials.
+
+Another useful trick: we can construct functions like
+\[
+f(x) = \max(0, x+1) - \max(0, x-1)
+\]
+to create piecewise linear approximations of functions like sigmoid using ReLU units.
+
+In practice, ReLU-based networks tend to converge faster and perform better than those using sigmoid or $\tanh$.
+
+\textbf{A Caveat: Dead ReLU Units}
+
+Despite its advantages, ReLU has a drawback. When $x < 0$, the gradient is zero. If the input to a neuron becomes negative and stays there, the neuron outputs zero and its weights stop updating.
+
+Let’s say the input to a neuron is 
+\[
+a = w_1 x_1 + w_2 x_2 + b
+\]
+If the bias $b$ becomes very negative due to a large update, then $a < 0$ regardless of $x_1$ and $x_2$. So the neuron outputs
+\[
+h = \text{ReLU}(a) = 0
+\]
+During backpropagation, the gradient flowing through this neuron becomes
+\[
+\frac{\partial L}{\partial w_1} = \frac{\partial L}{\partial y} \cdot \frac{\partial y}{\partial a_2} \cdot \frac{\partial a_2}{\partial h_1} \cdot \underbrace{\frac{\partial h_1}{\partial a_1}}_{=0} \cdot \frac{\partial a_1}{\partial w_1} = 0
+\]
+Because $\frac{\partial h_1}{\partial a_1} = 0$, the entire gradient is zero. The weights $w_1$, $w_2$, and $b$ will not change. This neuron has effectively \textbf{died} — it outputs zero and cannot recover.
+
+If the learning rate is too high, many ReLU neurons can die in this way. A simple fix is to initialize the bias $b$ to a small positive value (e.g., $0.01$), ensuring that neurons start with positive activation. Other ReLU variants (like Leaky ReLU and Parametric ReLU) have been proposed to mitigate this problem, and we will explore them later.
 

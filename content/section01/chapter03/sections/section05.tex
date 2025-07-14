@@ -1,1 +1,37 @@
 \section{Batch Normalization}
+
+Batch Normalization is a technique used to stabilize and accelerate the training of deep neural networks. It works by normalizing the input to each layer, making the training less sensitive to the choice of initialization and learning rate.
+
+To understand why batch normalization helps, consider a deep neural network trained using mini-batches. Let us focus on the weights between two layers, say layer 2 and layer 3. Suppose the activation output from layer 2, denoted by $\mathbf{h}^{(2)}$, serves as the input to layer 3. The pre-activation at layer 3 is given by
+\[
+\mathbf{s}^{(3)} = \mathbf{W}^{(3)} \mathbf{h}^{(2)} + \mathbf{b}^{(3)}
+\]
+Now, during training, if the distribution of $\mathbf{h}^{(2)}$ keeps changing across mini-batches—this phenomenon is known as \textbf{internal covariate shift}—then the optimization process becomes harder. The network is constantly adjusting to new distributions of inputs at each layer, which makes learning unstable and slow.
+
+A natural idea is to make the distribution of pre-activations $\mathbf{s}^{(3)}$ more stable across batches. In particular, it would be beneficial if $\mathbf{s}^{(3)}$ had zero mean and unit variance across a mini-batch. This is the core idea of batch normalization: normalize the pre-activations within each mini-batch.
+
+For a given neuron $k$ and example $i$ in the batch, the normalized activation is computed as
+\[
+\hat{s}_{ik}^{(3)} = \frac{s_{ik}^{(3)} - \mathbb{E}[s_k^{(3)}]}{\sqrt{\text{Var}[s_k^{(3)}] + \varepsilon}}
+\]
+Here,
+\begin{itemize}
+  \item $\mathbb{E}[s_k^{(3)}]$ is the empirical mean of the $k$-th unit’s pre-activation over the mini-batch.
+  \item $\text{Var}[s_k^{(3)}]$ is the empirical variance.
+  \item $\varepsilon$ is a small constant added for numerical stability.
+\end{itemize}
+
+To retain the representational capacity of the network, batch normalization introduces two trainable parameters for each unit: $\gamma_k$ and $\beta_k$. These parameters allow the network to scale and shift the normalized value.
+\[
+y_{ik}^{(3)} = \gamma_k \hat{s}_{ik}^{(3)} + \beta_k
+\]
+If the network learns,
+\[
+\gamma_k = \sqrt{\text{Var}[s_k^{(3)}]}, \quad \beta_k = \mathbb{E}[s_k^{(3)}],
+\]
+then we recover the original (unnormalized) activation
+\[
+y_{ik}^{(3)} = s_{ik}^{(3)}
+\]
+This means that, in the worst case, the network can undo the normalization if it finds the original distribution more favorable. Hence, batch normalization does not restrict the expressive power of the network.
+
