@@ -1,1 +1,38 @@
-\section{Introduction to Autoencoders}
+\section{Regularization in Autoencoders}
+
+Regularization in autoencoders helps prevent overfitting and encourages the model to learn meaningful features. Instead of just copying the input to the output, regularization forces the model to generalize. Below are three common ways this is done.
+
+\subsection{Denoising Autoencoders}
+
+Denoising autoencoders add noise to the input data, then train the model to reconstruct the original input from the noisy version. The idea is that the network must learn the underlying structure of the data to perform this task well.
+
+Let \( \tilde{\mathbf{x}} \) be the noisy input generated from the original input \( \mathbf{x} \) using a corruption process (e.g., Gaussian noise, masking noise). The encoder learns a hidden representation \( \mathbf{h} = f(\tilde{\mathbf{x}}) \), and the decoder reconstructs \( \mathbf{\hat{x}} = g(\mathbf{h}) \). The loss is computed between \( \mathbf{x} \) and \( \mathbf{\hat{x}} \), not between \( \tilde{\mathbf{x}} \) and \( \mathbf{\hat{x}} \). 
+
+This regularization discourages the model from simply memorizing the input.
+
+\subsection{Sparse Autoencoders}
+
+Sparse autoencoders apply a sparsity constraint on the hidden layer activations. The idea is to force most of the hidden units to be inactive (close to zero) for a given input. This leads to learning a set of features where only a few are active at a time, making the representation more efficient and interpretable.
+
+This is often done by adding a penalty term to the loss function. Let \( \rho \) be the desired sparsity level (e.g., 0.05), and \( \hat{\rho}_j \) be the average activation of hidden unit \( j \) over the training set. A common choice for the sparsity penalty is the KL-divergence
+\[
+\sum_{j=1}^{n_{\text{hidden}}} \text{KL}(\rho \| \hat{\rho}_j) = \sum_{j=1}^{n_{\text{hidden}}} \left( \rho \log \frac{\rho}{\hat{\rho}_j} + (1 - \rho) \log \frac{1 - \rho}{1 - \hat{\rho}_j} \right)
+\]
+The overall loss becomes
+\[
+\mathcal{L} = \text{Reconstruction Loss} + \beta \sum_{j} \text{KL}(\rho \| \hat{\rho}_j)
+\]
+where \( \beta \) controls the strength of the sparsity constraint.
+
+\subsection{Contractive Autoencoders}
+
+Contractive autoencoders penalize the sensitivity of the encoder to small changes in the input. This is done by adding the Frobenius norm of the Jacobian of the hidden representation with respect to the input to the loss function.
+
+Let \( \mathbf{h} = f(\mathbf{x}) \). The regularization term is
+\[
+\lambda \left\| \frac{\partial \mathbf{h}}{\partial \mathbf{x}} \right\|_F^2
+\]
+This term encourages the hidden representation to be locally invariant to small changes in input. As a result, the model learns more robust and stable features. The full loss is
+\[
+\mathcal{L} = \text{Reconstruction Loss} + \lambda \left\| \frac{\partial \mathbf{h}}{\partial \mathbf{x}} \right\|_F^2
+\]

@@ -1,12 +1,32 @@
 \chapter{Low-Rank Representations \& Autoencoding}
 
-Motivation behind how vectors are the fundamental quantity that we deal with. Everything to be processed is eventually a vector. 
+Most of modern machine learning operates on vectors. Regardless of the nature of input — whether it is numerical data, images, audio signals, or natural language — the first step is to convert it into a numerical format that a computer can process: a vector in $\mathbb{R}^d$. This is not merely a convenience; it is a necessity. Computers are optimized to perform linear algebra and numerical computation at scale, and vectors form the basis of such operations. From computing distances and similarities to matrix multiplications and optimization, everything depends on representing data in vector form.
+
+Let’s see how various data modalities are turned into vectors.
+\begin{itemize}
+    \item \textbf{Numeric Data}: Structured datasets with continuous or categorical variables like age, height, salary, etc., are naturally vectorized. For example, the features $\{\text{height}=170\text{ cm}, \text{weight}=65\text{ kg}, \text{age}=29\text{ yrs}\}$ can be represented as $\mathbf{x} = [170, 65, 29]^\top$. In practice, these vectors are often normalized to have zero mean and unit variance to help the optimization process.
+
+    \item \textbf{Images}: An image is a grid of pixels, each with intensity values. A grayscale image of size $28 \times 28$ (like MNIST) has $784$ pixels and can be flattened into a vector in $\mathbb{R}^{784}$. Colored images contain multiple channels, typically three for RGB. So an image of size $32 \times 32$ with 3 channels becomes a vector in $\mathbb{R}^{3072}$. In neural networks, this flattening is often deferred in case of images until after several layers, but conceptually, the image is still a point in a high-dimensional space.
+
+    \item \textbf{Audio}: A raw audio signal is a 1D waveform sampled at a fixed rate. A mono audio of 1 second at a 16kHz sampling rate results in a vector of $16,000$ samples in $\mathbb{R}^{16000}$. Audio is often chunked into frames and processed using spectrograms or Mel-frequency cepstral coefficients (MFCCs), which are again vector representations derived from the original waveform.
+
+    \item \textbf{Text}: Text data is symbolic and lacks a native numeric representation. To embed text in vector spaces, we use encoding schemes. At the simplest level, we can use one-hot encoding. But more powerful representations include dense word embeddings (like Word2Vec, GloVe) where each word maps to a dense vector in $\mathbb{R}^d$, often with $d$ ranging from $50$ to $300$. We will see this in detail in Section 2 of this book. 
+\end{itemize}
+
+Once each input modality is converted into a vector, we can begin applying machine learning models. However, a common challenge emerges: the \textit{\textbf{curse of dimensionality}}. As the number of dimensions increases, the volume of the space grows exponentially, and data points become sparse. This sparsity can severely impair learning algorithms. Intuitively, when data lives in a very high-dimensional space, it becomes difficult to learn generalizable patterns unless we have an enormous amount of training data.
+
+For example, if each input vector has $10,000$ dimensions, and we have only $100$ training samples, then most standard learning algorithms will overfit. They will memorize the training data but fail to generalize to unseen examples. This phenomenon is not just theoretical; it has real-world consequences. The model may show perfect accuracy during training but perform poorly during deployment.
+
+\textbf{\textit{Low-rank representations}} offer a solution to this problem. The idea is to reduce the dimensionality of the data while retaining most of the relevant information. This is done by projecting high-dimensional vectors onto a lower-dimensional subspace. Mathematically, we seek a low-rank approximation of the data matrix $X \in \mathbb{R}^{n \times d}$, where $n$ is the number of samples and $d$ is the original dimensionality. Techniques like Principal Component Analysis (PCA), autoencoders, or random projections are used to obtain these reduced representations.
+
+These compressed vectors are often referred to as \textbf{\textit{latent representations}}. They are called \textit{latent} because they are not observed directly but are inferred from the data. In deep learning, especially, the intermediate hidden layers of a neural network can be interpreted as learning such latent spaces. These representations often disentangle the factors of variation in the data. So, low-rank representations are not just about compression or storage efficiency. 
 
 \input{content/section01/chapter02/sections/section01.tex}
 \input{content/section01/chapter02/sections/section02.tex}
 \input{content/section01/chapter02/sections/section03.tex}
 \input{content/section01/chapter02/sections/section04.tex}
-\input{content/section01/chapter02/sections/section05.tex}
-\input{content/section01/chapter02/sections/section06.tex}
-\input{content/section01/chapter02/sections/section07.tex}
-\input{content/section01/chapter02/sections/section08.tex}
+
+\vspace{30pt}
+\hrule
+
+\afterpage{\blankpage}

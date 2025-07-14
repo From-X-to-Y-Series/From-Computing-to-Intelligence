@@ -1,2 +1,84 @@
-\section{Singular Value Decomposition}
+\section{Autoencoders and PCA}
+
+An autoencoder is a type of feedforward neural network with two parts: an encoder and a decoder.
+
+The encoder maps the input \( \mathbf{x}_i \in \mathbb{R}^d \) to a hidden representation \( \mathbf{h} \in \mathbb{R}^k \), where typically \( k < d \). This hidden representation \( \mathbf{h} \) is often called the \textit{code} or the \textit{bottleneck}.
+\[
+\mathbf{h} = f_{\text{enc}}(\mathbf{x}_i)
+\]
+The decoder tries to reconstruct the input from the hidden representation.
+\[
+\hat{\mathbf{x}}_i = f_{\text{dec}}(\mathbf{h})
+\]
+The model is trained to minimize the reconstruction loss between \( \mathbf{x}_i \) and \( \hat{\mathbf{x}}_i \), often using the squared error loss.
+\[
+\mathcal{L} = \| \mathbf{x}_i - \hat{\mathbf{x}}_i \|^2
+\]
+Now, suppose the dimension of the hidden representation is smaller than that of the input, i.e., \( \dim(\mathbf{h}) < \dim(\mathbf{x}_i) \). This forces the network to compress the input information. If the decoder can still reconstruct \( \mathbf{x}_i \) perfectly from \( \mathbf{h} \), it tells us something important: the hidden representation \( \mathbf{h} \) has preserved all the necessary information from \( \mathbf{x}_i \). \textit{Do you see an analogy with PCA?}
+
+\subsection{Link Between PCA and Autoencoders}
+
+We now show that the encoder in an autoencoder is equivalent to Principal Component Analysis (PCA) under the following conditions.
+\begin{itemize}
+    \item The encoder is linear
+    \item The decoder is linear
+    \item The loss function is squared error
+    \item The input data is normalized as
+    \[
+    \hat{x}_{ij} = \frac{1}{\sqrt{m}} \left( x_{ij} - \frac{1}{m} \sum_{k=1}^{m} x_{kj} \right)
+    \]
+\end{itemize}
+
+Let us examine the effect of this normalization. Define \( \hat{\mathbf{X}} \) to be the normalized input matrix. The expression inside the parentheses centers the data along each feature \( j \) by subtracting the mean. Let \( \mathbf{X}^0 \) denote the zero-mean data matrix. 
+\[
+\hat{\mathbf{X}} = \frac{1}{\sqrt{m}} \mathbf{X}^0 \implies \hat{\mathbf{X}}^\top \hat{\mathbf{X}} = \frac{1}{m} (\mathbf{X}^0)^\top \mathbf{X}^0
+\]
+This is the covariance matrix of the centered data, which plays a central role in PCA.
+
+Now we minimize the squared error loss using a linear encoder and decoder. 
+\[
+\min_{\theta} \sum_{i=1}^{m} \sum_{j=1}^{n} (x_{ij} - \hat{x}_{ij})^2
+\]
+In matrix notation, this is 
+\[
+\min_{\mathbf{W}^*, \mathbf{H}} \| \mathbf{X} - \mathbf{H} \mathbf{W}^* \|_F^2
+\]
+where \( \| \mathbf{A} \|_F = \sqrt{\sum_{i,j} a_{ij}^2} \) is the Frobenius norm.
+
+From the Singular Value Decomposition (SVD), the optimal solution to this is 
+\[
+\mathbf{H} \mathbf{W}^* = \mathbf{U}_{:, \leq k} \Sigma_{k,k} \mathbf{V}_{:, \leq k}^\top
+\]
+One possible solution (by matching terms) is 
+\[
+\mathbf{H} = \mathbf{U}_{:, \leq k} \Sigma_{k,k}, \quad \mathbf{W}^* = \mathbf{V}_{:, \leq k}^\top
+\]
+
+We now derive the encoder weights and verify that the encoder is linear.
+
+\begin{align*}
+\mathbf{H} &= \mathbf{U}_{:, \leq k} \Sigma_{k,k} \\
+&= (\mathbf{X} \mathbf{X}^\top)(\mathbf{X} \mathbf{X}^\top)^{-1} \mathbf{U}_{:, \leq k} \Sigma_{k,k} \\
+&= (\mathbf{X} \mathbf{V} \Sigma^\top \mathbf{U}^\top)(\mathbf{U} \Sigma \Sigma^\top \mathbf{U}^\top)^{-1} \mathbf{U}_{:, \leq k} \Sigma_{k,k} \quad (\text{since } \mathbf{X} = \mathbf{U} \Sigma \mathbf{V}^\top) \\
+&= \mathbf{X} \mathbf{V} \Sigma^\top \mathbf{U}^\top (\mathbf{U} \Sigma \Sigma^\top \mathbf{U}^\top)^{-1} \mathbf{U}_{:, \leq k} \Sigma_{k,k} \\
+&= \mathbf{X} \mathbf{V} \Sigma^\top (\Sigma \Sigma^\top)^{-1} \mathbf{U}^\top \mathbf{U}_{:, \leq k} \Sigma_{k,k} \\
+&= \mathbf{X} \mathbf{V} \Sigma^\top \Sigma^{-1} \Sigma^{-1} \mathbf{U}^\top \mathbf{U}_{:, \leq k} \Sigma_{k,k} \\
+&= \mathbf{X} \mathbf{V} \Sigma^{-1} \mathbf{I}_{:, \leq k} \Sigma_{k,k} \quad (\text{since } \mathbf{U}^\top \mathbf{U}_{:, \leq k} = \mathbf{I}_{:, \leq k}) \\
+\mathbf{H} &= \mathbf{X} \mathbf{V}_{:, \leq k}
+\end{align*}
+
+Thus, \( \mathbf{H} \) is a linear transformation of \( \mathbf{X} \), and the encoder matrix is
+\[
+\mathbf{W} = \mathbf{V}_{:, \leq k}
+\]
+
+From SVD, \( \mathbf{V} \) contains the eigenvectors of \( \mathbf{X}^\top \mathbf{X} \). From PCA, the projection matrix \( \mathbf{P} \) also consists of the eigenvectors of the covariance matrix.
+
+If we normalize \( \mathbf{X} \) as
+\[
+\hat{x}_{ij} = \frac{1}{\sqrt{m}} \left( x_{ij} - \frac{1}{m} \sum_{k=1}^{m} x_{kj} \right)
+\]
+then \( \mathbf{X}^\top \mathbf{X} \) becomes the covariance matrix.
+
+Hence, the encoder weights from the linear autoencoder and the PCA projection matrix are the same.
 

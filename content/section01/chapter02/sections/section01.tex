@@ -1,16 +1,121 @@
-\section{Refresher on Linear Algebra}
+\section{Principal Component Analysis}
+
+Principal Component Analysis (PCA) is a method for reducing the number of variables in a dataset while keeping as much information as possible. It works by finding new directions, called \textit{principal components}, that capture the most variation in the data. These directions are linear combinations of the original variables. 
+
+\subsection{Interpretation 1: High Variance In New Basis}
+
+One way to understand PCA is to think about variance. PCA looks for directions in which the data varies the most. \textit{Why do we care about variance?} Because variance tells us where the information in the data lies. If a direction has high variance, it means that the data points are spread out along that direction. So, when we project the data onto such directions, we retain more of the structure and differences among data points.
+
+Suppose we have a centered data matrix \(\mathbf{X} \in \mathbb{R}^{n \times d}\), where each row \(\mathbf{x}_i\) is a data point and each column has zero mean. We want to find a unit vector \(\mathbf{w} \in \mathbb{R}^d\) that maximizes the variance of the data when projected onto \(\mathbf{w}\).
+
+The projection of data points onto \(\mathbf{w}\) is given by
+\[
+\mathbf{X} \mathbf{w} = \begin{bmatrix}
+\mathbf{x}_1^\top \mathbf{w} \\
+\mathbf{x}_2^\top \mathbf{w} \\
+\vdots \\
+\mathbf{x}_n^\top \mathbf{w}
+\end{bmatrix}
+\in \mathbb{R}^n.
+\]
+The variance of these projected values is
+\[
+\mathrm{Var}(\mathbf{X} \mathbf{w}) = \frac{1}{n} \sum_{i=1}^n (\mathbf{x}_i^\top \mathbf{w})^2 = \frac{1}{n} \| \mathbf{X} \mathbf{w} \|^2 = \mathbf{w}^\top \left( \frac{1}{n} \mathbf{X}^\top \mathbf{X} \right) \mathbf{w} = \mathbf{w}^\top \Sigma \mathbf{w},
+\]
+where \(\Sigma = \frac{1}{n} \mathbf{X}^\top \mathbf{X}\) is the covariance matrix.
+
+Our goal is to find \(\mathbf{w}\) that maximizes this variance, with the constraint that \(\mathbf{w}\) is a unit vector.
+\[
+\max_{\mathbf{w} \in \mathbb{R}^d} \mathbf{w}^\top \Sigma \mathbf{w} \quad \text{subject to} \quad \mathbf{w}^\top \mathbf{w} = 1.
+\]
+
+We solve this constrained optimization using the method of Lagrange multipliers. We define the Lagrangian
+\[
+\mathcal{L}(\mathbf{w}, \lambda) = \mathbf{w}^\top \Sigma \mathbf{w} - \lambda (\mathbf{w}^\top \mathbf{w} - 1),
+\]
+where \(\lambda\) is the Lagrange multiplier. To find stationary points, take the gradient with respect to \(\mathbf{w}\) and set it to zero.
+\[
+\nabla_{\mathbf{w}} \mathcal{L} = 2 \Sigma \mathbf{w} - 2 \lambda \mathbf{w} = \mathbf{0} \implies \Sigma \mathbf{w} = \lambda \mathbf{w}.
+\]
+This is the standard eigenvalue equation. The vector \(\mathbf{w}\) must be an eigenvector of \(\Sigma\), and \(\lambda\) the corresponding eigenvalue.
+
+Recall we want to maximize \(\mathbf{w}^\top \Sigma \mathbf{w}\). Using the eigenvector property,
+\(
+\mathbf{w}^\top \Sigma \mathbf{w} = \mathbf{w}^\top (\lambda \mathbf{w}) = \lambda \mathbf{w}^\top \mathbf{w} = \lambda,
+\)
+since \(\mathbf{w}\) is unit norm.
+
+So, the variance equals the eigenvalue \(\lambda\). To maximize variance, choose \(\mathbf{w}\) as the eigenvector corresponding to the largest eigenvalue \(\lambda_1\).
+This \(\mathbf{w}_1\) is the \textit{first principal component}. The variance along \(\mathbf{w}_1\) is \(\lambda_1\).
+
+To find the second principal component \(\mathbf{w}_2\), we maximize variance with the constraint that \(\mathbf{w}_2\) is orthogonal to \(\mathbf{w}_1\).
+\[
+\max_{\mathbf{w}_2} \mathbf{w}_2^\top \Sigma \mathbf{w}_2, \quad \text{subject to } \mathbf{w}_2^\top \mathbf{w}_2 = 1, \quad \mathbf{w}_2^\top \mathbf{w}_1 = 0.
+\]
+
+The solution is the eigenvector corresponding to the second largest eigenvalue \(\lambda_2\), and so on.
 
 
-\subsection{Linear Independence}
+\subsection{Interpretation 2: Minimum Covariance In New Basis}
 
+One way to understand PCA is through its effect on the covariance structure of the data. In the original space, features may be correlated, which can make the data harder to interpret or model. PCA changes the coordinate system by rotating the data onto a new set of orthogonal axes, \textit{principal components}, where these correlations are removed.
 
+Let \( \mathbf{X} \in \mathbb{R}^{n \times d} \) be the zero-mean data matrix. The sample covariance matrix of the original data is given by
+\[
+\Sigma = \frac{1}{n} \mathbf{X}^\top \mathbf{X}
+\]
+Let \( \mathbf{W} \in \mathbb{R}^{d \times k} \) be the matrix whose columns are the top \( k \) eigenvectors of \( \Sigma \). The projected data in the new basis is
+\[
+\mathbf{Z} = \mathbf{X} \mathbf{W}
+\]
+Then the covariance matrix of the projected data is
+\[
+\Sigma_{\mathbf{Z}} = \frac{1}{n} \mathbf{Z}^\top \mathbf{Z} = \frac{1}{n} \mathbf{W}^\top \mathbf{X}^\top \mathbf{X} \mathbf{W} = \mathbf{W}^\top \Sigma \mathbf{W}
+\]
+Since the columns of \( \mathbf{W} \) are the eigenvectors of \( \Sigma \), the expression \( \mathbf{W}^\top \Sigma \mathbf{W} \) becomes a diagonal matrix
+\[
+\Sigma_{\mathbf{Z}} = 
+\begin{bmatrix}
+\lambda_1 & 0 & \cdots & 0 \\
+0 & \lambda_2 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \cdots & \lambda_k
+\end{bmatrix}
+\]
+where \( \lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_k \) are the top \( k \) eigenvalues of \( \Sigma \). This means that in the PCA-transformed space, the features (i.e., the principal components) are uncorrelated, and each one captures a specific portion of the total variance in the data.
 
-\subsection{Orthogonality}
+This interpretation shows that PCA not only reduces dimensionality but also simplifies the covariance structure. In the new basis, the data has no cross-correlation between dimensions, making downstream tasks like regression or classification more stable and interpretable. It essentially decorrelates the variables by design.
 
+\subsection{Interpretation 3: Best Low-Rank Representation}
 
-\subsection{Eigenvalues and Eigenvectors}
+The most rigorous interpretation of PCA is that it gives the best low-rank approximation to the data in terms of minimizing reconstruction error. This means PCA finds a lower-dimensional subspace that captures as much of the original data as possible, while reducing dimensionality in a way that the reconstruction from this subspace is as close as possible to the original.
 
+Let \(\mathbf{X} \in \mathbb{R}^{n \times d}\) be the data matrix, where each row is a centered data point (i.e., the column means of \(\mathbf{X}\) are zero). We aim to find a rank-\(k\) approximation \(\hat{\mathbf{X}}\) of \(\mathbf{X}\), with \(k < d\), such that the reconstruction error is minimized. That is,
+\[
+\min_{\text{rank}(\hat{\mathbf{X}}) = k} \|\mathbf{X} - \hat{\mathbf{X}}\|_F^2
+\]
+where \(\|\cdot\|_F\) denotes the Frobenius norm, which sums the squared entries of the matrix.
 
+We project the data onto a \(k\)-dimensional subspace using a projection matrix \(\mathbf{W} \in \mathbb{R}^{d \times k}\), whose columns are orthonormal vectors, i.e., \(\mathbf{W}^\top \mathbf{W} = \mathbf{I}_k\). The data projected into this subspace is \(\mathbf{Z} = \mathbf{X} \mathbf{W}\). We can then reconstruct the original data from this lower-dimensional representation as
+\[
+\hat{\mathbf{X}} = \mathbf{Z} \mathbf{W}^\top = \mathbf{X} \mathbf{W} \mathbf{W}^\top
+\]
+The reconstruction error is
+\[
+\|\mathbf{X} - \hat{\mathbf{X}}\|_F^2 = \|\mathbf{X} - \mathbf{X} \mathbf{W} \mathbf{W}^\top\|_F^2 = \text{Tr}[(\mathbf{X} - \mathbf{X} \mathbf{W} \mathbf{W}^\top)^\top (\mathbf{X} - \mathbf{X} \mathbf{W} \mathbf{W}^\top)]
+\]
+\[
+= \text{Tr}(\mathbf{X}^\top \mathbf{X}) - \text{Tr}(\mathbf{X}^\top \mathbf{X} \mathbf{W} \mathbf{W}^\top) - \text{Tr}(\mathbf{W} \mathbf{W}^\top \mathbf{X}^\top \mathbf{X}) + \text{Tr}(\mathbf{W} \mathbf{W}^\top \mathbf{X}^\top \mathbf{X} \mathbf{W} \mathbf{W}^\top)
+\]
+Using cyclic properties of the trace and the fact that \(\mathbf{W}^\top \mathbf{W} = \mathbf{I}_k\), this simplifies to
+\[
+= \text{Tr}(\mathbf{X}^\top \mathbf{X}) - \text{Tr}(\mathbf{W}^\top \mathbf{X}^\top \mathbf{X} \mathbf{W})
+\]
+Thus, minimizing the reconstruction error is equivalent to maximizing the trace
+\[
+\max_{\mathbf{W}^\top \mathbf{W} = \mathbf{I}_k} \text{Tr}(\mathbf{W}^\top \mathbf{X}^\top \mathbf{X} \mathbf{W})
+\]
+The matrix \(\mathbf{X}^\top \mathbf{X}\) is the unnormalized covariance matrix of the data (scaled by \(n\)). This is a symmetric, positive semi-definite matrix. The solution to this optimization problem is given by setting the columns of \(\mathbf{W}\) to be the top \(k\) eigenvectors of \(\mathbf{X}^\top \mathbf{X}\) corresponding to the top \(k\) eigenvalues.
 
-\subsection{Eigenvalue Decomposition}
+Therefore, PCA finds a new basis of \(k\) orthogonal directions (eigenvectors) that capture the largest variance in the data and provide the best low-rank reconstruction in the least-squares sense.
 

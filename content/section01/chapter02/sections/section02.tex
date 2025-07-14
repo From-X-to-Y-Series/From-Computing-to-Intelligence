@@ -1,9 +1,67 @@
-\section{Principal Component Analysis}
+\section{Singular Value Decomposition}
 
-\subsection{Interpretation 1: Best Low-Rank Representation}
+So far, we've talked about square matrices $\mathbf{A} \in \mathbb{R}^{n \times n}$. But \textit{what if the matrix is rectangular, say $\mathbf{A} \in \mathbb{R}^{m \times n}$? Can it still have eigenvectors?}
 
+Suppose we try to apply $\mathbf{A}$ on a vector $\mathbf{x} \in \mathbb{R}^{n}$. The result $\mathbf{A}\mathbf{x}$ belongs to $\mathbb{R}^m$, not $\mathbb{R}^n$. So the equation $\mathbf{A}\mathbf{x} = \lambda \mathbf{x}$ doesn't make sense anymore because both sides aren't in the same space. This means rectangular matrices can't have eigenvectors in the same way square ones do.
 
-\subsection{Interpretation 2: Minimum Covariance In New Basis}
+However, $\mathbf{A}$ still defines a transformation from $\mathbb{R}^n$ to $\mathbb{R}^m$. What if we could find pairs of vectors $(\mathbf{v}_i, \mathbf{u}_i)$ such that
+\[
+\mathbf{A} \mathbf{v}_i = \sigma_i \mathbf{u}_i
+\]
+where $\mathbf{v}_i \in \mathbb{R}^n$, $\mathbf{u}_i \in \mathbb{R}^m$, and $\sigma_i$ are scalars. If the vectors $\mathbf{v}_1, \dots, \mathbf{v}_k$ form an orthogonal basis for a subspace of $\mathbb{R}^n$, and $\mathbf{u}_1, \dots, \mathbf{u}_k$ form an orthogonal basis for a subspace of $\mathbb{R}^m$, then any $\mathbf{x} \in \mathbb{R}^n$ can be expressed as
+\[
+\mathbf{x} = \sum_{i=1}^{k} \alpha_i \mathbf{v}_i
+\]
+Then applying $\mathbf{A}$ becomes
+\[
+\mathbf{A} \mathbf{x} = \sum_{i=1}^{k} \alpha_i \mathbf{A} \mathbf{v}_i = \sum_{i=1}^{k} \alpha_i \sigma_i \mathbf{u}_i
+\]
+So once again, the matrix multiplication simplifies into scalar multiplications. Here, $k = \text{rank}(\mathbf{A})$.
 
+We can write the equations
+\[
+\mathbf{A} \mathbf{v}_1 = \sigma_1 \mathbf{u}_1, \quad \mathbf{A} \mathbf{v}_2 = \sigma_2 \mathbf{u}_2, \quad \dots, \quad \mathbf{A} \mathbf{v}_k = \sigma_k \mathbf{u}_k
+\]
+or compactly,
+\[
+\mathbf{A} \mathbf{V} = \mathbf{U} \Sigma
+\]
+where $\mathbf{V} \in \mathbb{R}^{n \times k}$ contains the vectors $\mathbf{v}_1, \dots, \mathbf{v}_k$ as columns, $\mathbf{U} \in \mathbb{R}^{m \times k}$ contains the vectors $\mathbf{u}_1, \dots, \mathbf{u}_k$ as columns, and $\Sigma \in \mathbb{R}^{k \times k}$ is a diagonal matrix with entries $\sigma_1, \dots, \sigma_k$.
 
-\subsection{Interpretation 3: High Variance In New Basis}
+We can extend the orthogonal vectors $\mathbf{v}_1, \dots, \mathbf{v}_k$ to a full orthogonal basis of $\mathbb{R}^n$ using Gram-Schmidt. Similarly, we can complete $\mathbf{u}_1, \dots, \mathbf{u}_k$ to a full orthogonal basis of $\mathbb{R}^m$. With this, we get the full SVD.
+\[
+\mathbf{A} = \mathbf{U} \Sigma \mathbf{V}^\top
+\]
+Here $\mathbf{U} \in \mathbb{R}^{m \times m}$ is an orthogonal matrix (left singular vectors), $\mathbf{V} \in \mathbb{R}^{n \times n}$ is an orthogonal matrix (right singular vectors), and $\Sigma \in \mathbb{R}^{m \times n}$ is a diagonal matrix with singular values $\sigma_1 \ge \sigma_2 \ge \dots \ge \sigma_k > 0$ on the diagonal.
+
+To find $\mathbf{U}$, $\mathbf{V}$, and $\Sigma$, assume the decomposition exists
+\[
+\mathbf{A} = \mathbf{U} \Sigma \mathbf{V}^\top
+\]
+Then
+\[
+\mathbf{A}^\top \mathbf{A} = (\mathbf{U} \Sigma \mathbf{V}^\top)^\top (\mathbf{U} \Sigma \mathbf{V}^\top) = \mathbf{V} \Sigma^\top \mathbf{U}^\top \mathbf{U} \Sigma \mathbf{V}^\top = \mathbf{V} \Sigma^2 \mathbf{V}^\top
+\]
+So $\mathbf{A}^\top \mathbf{A}$ has the same eigenvectors as $\mathbf{V}$ and eigenvalues $\Sigma^2$. Similarly,
+\[
+\mathbf{A} \mathbf{A}^\top = \mathbf{U} \Sigma \mathbf{V}^\top \mathbf{V} \Sigma^\top \mathbf{U}^\top = \mathbf{U} \Sigma^2 \mathbf{U}^\top
+\]
+Thus, $\mathbf{V}$ contains the eigenvectors of $\mathbf{A}^\top \mathbf{A}$, $\mathbf{U}$ contains the eigenvectors of $\mathbf{A} \mathbf{A}^\top$, and the non-zero eigenvalues of both are the same.
+
+\[
+\sigma_i = \sqrt{\lambda_i} \quad \text{(singular values)}
+\]
+
+\begin{center}
+\begin{tabular}{|c|l|}
+\hline
+Symbol & Meaning \\
+\hline
+$\sigma_i$ & Singular value of $\mathbf{A}$ \\
+$\mathbf{U}$ & Left singular matrix (eigenvectors of $\mathbf{A} \mathbf{A}^\top$) \\
+$\mathbf{V}$ & Right singular matrix (eigenvectors of $\mathbf{A}^\top \mathbf{A}$) \\
+$\Sigma$ & Diagonal matrix with singular values \\
+\hline
+\end{tabular}
+\captionof{table}{SVD Components and Interpretations}
+\end{center}
